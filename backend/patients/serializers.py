@@ -29,7 +29,7 @@ class PatientListSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Patient
-        fields = ['id']
+        fields = ['id', 'age']
 
 class PatientStateSerializer(serializers.ModelSerializer):
     class Meta:
