@@ -105,7 +105,23 @@ def patient_change_state(request,pk):
         return HttpResponse(status=404)
 
     if request.method == 'PUT':
-        next_state_id = PatientSerializer(patient, context={'fields': ['patient_state']}).data.get('patient_state').get('next_state_id')
+        #patient_state = PatientState.objects.get(pk=patient.current_state_id)
+        primary_condition = PatientSerializer(patient, context={'fields': ['patient_state']}).data.get('patient_state').get('primary_condition')
+        primary_condition_boolean = PatientSerializer(patient, context={'fields': [primary_condition]}).data.get(primary_condition)
+
+        secondary_condition = PatientSerializer(patient, context={'fields': ['patient_state']}).data.get(
+            'patient_state').get('secondary_condition')
+        secondary_condition_boolean = PatientSerializer(patient, context={'fields': [secondary_condition]}).data.get(
+            secondary_condition)
+
+        if primary_condition_boolean:
+            next_state_variant = 'C'
+        elif secondary_condition_boolean:
+            next_state_variant = 'B'
+        else:
+            next_state_variant = 'A'
+
+        next_state_id = PatientSerializer(patient, context={'fields': ['patient_state']}).data.get('patient_state').get("next_state_" + next_state_variant + "_id")
         next_state_json = {"current_state_id": next_state_id}
         serializer = PatientSerializer(patient, data=next_state_json)
         if serializer.is_valid():
@@ -114,11 +130,9 @@ def patient_change_state(request,pk):
         return JsonResponse(serializer.errors, status=400)
 
 @csrf_exempt
-def test(request,pk):
+def patient_cure(request, pk):
     try:
         patient = Patient.objects.get(pk=pk)
     except Patient.DoesNotExist:
         return HttpResponse(status=404)
 
-    if request.method == 'GET':
-        patient.changeState()

@@ -18,7 +18,7 @@ class PatientSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Patient
-        fields = ('age', 'gender', 'hair_color', 'current_state_id', 'patient_state', 'is_cured')
+        fields = "__all__"
 
 class PatientListSerializer(serializers.ModelSerializer):
     def get_field_names(self, *args, **kwargs):
