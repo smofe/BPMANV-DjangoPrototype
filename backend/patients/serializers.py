@@ -18,8 +18,18 @@ class PatientSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Patient
-        fields = ('age', 'gender', 'hair_color', 'current_state_id', 'patient_state')
+        fields = ('age', 'gender', 'hair_color', 'current_state_id', 'patient_state', 'is_cured')
 
+class PatientListSerializer(serializers.ModelSerializer):
+    def get_field_names(self, *args, **kwargs):
+        field_names = self.context.get('fields', None)
+        if field_names:
+            return field_names
+        return super(PatientListSerializer, self).get_field_names(*args, **kwargs)
+
+    class Meta:
+        model = Patient
+        fields = ['id']
 
 class PatientStateSerializer(serializers.ModelSerializer):
     class Meta:

@@ -4,7 +4,7 @@ from django.http import HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.parsers import JSONParser
 from .models import Patient, PatientState
-from .serializers import PatientSerializer, PatientStateSerializer
+from .serializers import PatientSerializer, PatientListSerializer, PatientStateSerializer
 import time, datetime
 
 
@@ -12,7 +12,7 @@ import time, datetime
 def patient_list(request):
     if request.method == 'GET':
         patients = Patient.objects.all()
-        serializer = PatientSerializer(patients, many=True)
+        serializer = PatientListSerializer(patients, many=True)
         return JsonResponse(serializer.data, safe=False)
 
     elif request.method == 'POST':
@@ -60,6 +60,30 @@ def patient_detail(request, pk):
     elif request.method == 'DELETE':
         patient.delete()
         return HttpResponse(status=204)
+
+@csrf_exempt
+def patientstate_detail(request, pk):
+    try:
+        patient_state = PatientState.objects.get(pk=pk)
+    except PatientState.DoesNotExist:
+        return HttpResponse(status=404)
+
+    if request.method == 'GET':
+        serializer = PatientStateSerializer(patient_state)
+        return JsonResponse(serializer.data)
+
+    elif request.method == 'PUT':
+        data = JSONParser().parse(request)
+        serializer = PatientStateSerializer(patient_state, data=data)
+        if serializer.is_valid():
+            serializer.save()
+            return JsonResponse(serializer.data)
+        return JsonResponse(serializer.errors, status=400)
+
+    elif request.method == 'DELETE':
+        patient_state.delete()
+        return HttpResponse(status=204)
+
 
 def patient_check_field(request, pk, field):
     try:
