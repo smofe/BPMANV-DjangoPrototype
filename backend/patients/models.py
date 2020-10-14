@@ -1,6 +1,4 @@
 from django.db import models
-from .tasks import testTask
-from datetime import datetime, timedelta
 
 
 class Patient(models.Model):
@@ -9,11 +7,6 @@ class Patient(models.Model):
     hair_color = models.CharField(max_length=20, default='Orange')
     current_state_id = models.IntegerField(default=0)
     is_cured = models.BooleanField(default=False)
-
-    def changeState(self):
-
-        testTask.apply_async(args=[self], eta=datetime.now() + timedelta(seconds=10))
-
 
 
 class PatientState(models.Model):
