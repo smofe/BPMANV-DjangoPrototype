@@ -79,8 +79,8 @@ def patient_change_state(request,pk):
         else:
             next_state_variant = 'A'
 
-        next_state_id = PatientSerializer(patient, context={'fields': ['patient_state']}).data.get('patient_state').get("next_state_" + next_state_variant + "_id")
-        next_state_json = {"current_state_id": next_state_id}
+        next_id = PatientSerializer(patient, context={'fields': ['patient_state']}).data.get('patient_state').get("next_state_" + next_state_variant + "_id")
+        next_state_json = {"current_state_id": next_id}
         serializer = PatientSerializer(patient, data=next_state_json)
         if serializer.is_valid():
             serializer.save()
