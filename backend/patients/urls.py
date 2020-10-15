@@ -7,5 +7,5 @@ urlpatterns = [
     path('patients/<int:pk>/changestate/', views.patient_change_state),
     path('patients/<int:pk>/<str:field>/', views.patient_check_field),
     path('patientstates/', views.patient_state_list),
-    path('patientstates/<int:pk>/', views.patientstate_detail),
+    path('patientstates/<int:pk>/', views.patient_state_detail),
 ]
