@@ -1,4 +1,5 @@
 from django.views.decorators.csrf import csrf_exempt
+from django.shortcuts import get_object_or_404
 from rest_framework import status, generics
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -46,10 +47,7 @@ def patient_check_field(request, pk, field):
     """
     Retrieve one specific field of a patient
     """
-    try:
-        patient = Patient.objects.get(pk=pk)
-    except Patient.DoesNotExist:
-        return Response(status=status.HTTP_404_NOT_FOUND)
+    patient = get_object_or_404(Patient, pk=pk)
 
     if request.method == 'GET':
         serializer = PatientSerializer(patient, context={'fields': [field]})
@@ -64,10 +62,7 @@ def patient_change_state(request,pk):
     """
     Invoke a phase change on a patient
     """
-    try:
-        patient = Patient.objects.get(pk=pk)
-    except Patient.DoesNotExist:
-        return Response(status=status.HTTP_404_NOT_FOUND)
+    patient = get_object_or_404(Patient, pk=pk)
 
     if request.method == 'PUT':
         primary_condition = PatientSerializer(patient, context={'fields': ['patient_state']}).data.get('patient_state').get('primary_condition')
