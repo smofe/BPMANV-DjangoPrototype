@@ -1,10 +1,10 @@
-from django.views.decorators.csrf import csrf_exempt
 from django.shortcuts import get_object_or_404
 from rest_framework import status, generics
 from rest_framework.decorators import api_view
+from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from .models import Patient, PatientState
-from .serializers import PatientSerializer, PatientListSerializer, PatientStateSerializer
+from .serializers import PatientSerializer, PatientStateSerializer
 import datetime
 
 
@@ -22,7 +22,6 @@ class PatientStateList(generics.ListCreateAPIView):
     """
     queryset = PatientState.objects.all()
     serializer_class = PatientStateSerializer
-
 
 
 class PatientDetail(generics.RetrieveUpdateDestroyAPIView):
