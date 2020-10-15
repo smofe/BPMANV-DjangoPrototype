@@ -18,6 +18,7 @@ class Patient(models.Model):
     current_state_id = models.IntegerField(default=0)
     is_ventilated = models.BooleanField(default=False)
     has_tourniquet = models.BooleanField(default=False)
+    name = models.CharField(max_length=50, default='Dale Nows')
 
 
 class PatientState(models.Model):
@@ -26,6 +27,6 @@ class PatientState(models.Model):
     next_state_A_id = models.IntegerField(default=0)
     next_state_B_id = models.IntegerField(default=0)
     next_state_C_id = models.IntegerField(default=0)
-    description = models.TextField(default='')
+    description = models.TextField(default='This is a patient.')
     primary_condition = models.CharField(max_length=50, default="is_ventilated")
     secondary_condition = models.CharField(max_length=50, default="has_tourniquet")
