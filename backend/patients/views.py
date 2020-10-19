@@ -3,9 +3,10 @@ from rest_framework import status, generics
 from rest_framework.decorators import api_view
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
-from .models import Patient, PatientState
-from .serializers import PatientSerializer, PatientStateSerializer
+from .models import Patient, PatientState, Entity, Inventory
+from .serializers import PatientSerializer, PatientStateSerializer, EntitySerializer, InventorySerializer
 import datetime
+from .utils import *
 
 
 class PatientList(generics.ListCreateAPIView):
@@ -87,3 +88,61 @@ def patient_change_state(request,pk):
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
+class EntityDetail(generics.RetrieveUpdateDestroyAPIView):
+    """
+    Lists one entity in detail, update an entity or delete one.
+    """
+    queryset = Entity.objects.all()
+    serializer_class = EntitySerializer
+
+
+class InventoryDetail(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Inventory.objects.all()
+    serializer_class = InventorySerializer
+
+
+@api_view(['GET'])
+def entity_inventory_details(request, pk):
+    entity = get_object_or_404(Entity, pk=pk)
+
+    if request.method == 'GET':
+        serializer = InventorySerializer(entity.inventory)
+        return Response(serializer.data)
+
+
+@api_view(['GET'])
+def patient_check_state(request, pk):
+    patient = get_object_or_404(Patient, pk=pk)
+
+    if request.method == 'GET':
+        serializer = PatientStateSerializer(patient.patient_state)
+        return Response(serializer.data)
+
+
+@api_view(['PATCH'])
+def inventory_exchange(request, sender_pk, receiver_pk):
+    """
+    Transfers specified materials from the senders inventory to the receivers inventory if possible
+    """
+    sender = get_object_or_404(Entity, pk=sender_pk)
+    receiver = get_object_or_404(Entity, pk=receiver_pk)
+
+    if request.method == 'PATCH':
+        sender_json = InventorySerializer(sender.inventory).data
+        receiver_json = InventorySerializer(receiver.inventory).data
+        request_json = request.data
+        if json_are_all_values_positive(request_json):
+            if json_is_subset_of(request_json, sender_json):
+                json_subtract_subset(sender_json, request_json)
+                json_add_subset(receiver_json, request_json)
+                sender_serializer = InventorySerializer(sender.inventory, data=sender_json)
+                receiver_serializer = InventorySerializer(receiver.inventory, data=receiver_json)
+                if sender_serializer.is_valid() and receiver_serializer.is_valid():
+                    sender_serializer.save()
+                    receiver_serializer.save()
+                    return Response(receiver_serializer.data)
+            else:
+                return Response("The inventory requested from does not contain the specified quantities of material", status=status.HTTP_400_BAD_REQUEST)
+        else:
+            return Response("No negative numbers are allowed in an exchange request", status=status.HTTP_400_BAD_REQUEST)
