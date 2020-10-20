@@ -15,6 +15,19 @@ def create_auth_token(sender, instance=None, created=False, **kwargs):
 class PatientState(models.Model):
     respiration_rate = models.IntegerField(default=20)
     heart_rate = models.IntegerField(default=70)
+    oxygen_saturation = models.IntegerField(default=95)
+    blood_pressure_sys = models.IntegerField(default=120)
+    # ist gehfähig
+    is_ambulant = models.BooleanField(default=True)
+    # hat spritzende Blutung
+    has_sputtering_bleeding = models.BooleanField(default=False)
+    # blutet
+    is_bleeding = models.BooleanField(default=False)
+    # ist regungslos
+    is_motionless = models.BooleanField(default=False)
+    # hat Zyanose
+    has_cyanosis = models.BooleanField(default=False)
+
     next_state_A_id = models.IntegerField(default=0)
     next_state_B_id = models.IntegerField(default=0)
     next_state_C_id = models.IntegerField(default=0)
@@ -24,15 +37,18 @@ class PatientState(models.Model):
 
 
 class Patient(models.Model):
-    patient_state = models.ForeignKey(PatientState, default=1, on_delete=models.CASCADE)
-    age = models.IntegerField(default=0)
+    name = models.CharField(max_length=50, default='unknown')
+    age = models.IntegerField(default=9999)
     gender = models.CharField(max_length=20, default='none')
     hair_color = models.CharField(max_length=20, default='Orange')
-    is_ventilated = models.BooleanField(default=False)
-    has_tourniquet = models.BooleanField(default=False)
-    name = models.CharField(max_length=50, default='Dale Nows')
+    patient_state = models.ForeignKey(PatientState, default=1, on_delete=models.CASCADE)
     start_time = models.DateTimeField(default=datetime.now())
     delay_in_minutes = models.IntegerField(default=15)
+
+    is_in_recovery_position = models.BooleanField(default=False)
+    is_ventilated = models.BooleanField(default=False)
+    has_tourniquet = models.BooleanField(default=False)
+    get_infusion = models.BooleanField(default=False)
 
 
 class Entity(models.Model):
