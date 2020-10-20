@@ -1,9 +1,8 @@
 from rest_framework import serializers
-from .models import Patient, PatientState
+from .models import Patient, PatientState, Entity, Inventory
 
 
 class PatientSerializer(serializers.ModelSerializer):
-    patient_state = serializers.SerializerMethodField(method_name="get_patient_state")
 
     def get_field_names(self, *args, **kwargs):
         field_names = self.context.get('fields', None)
@@ -11,14 +10,10 @@ class PatientSerializer(serializers.ModelSerializer):
             return field_names
         return super(PatientSerializer, self).get_field_names(*args, **kwargs)
 
-    def get_patient_state(self, obj):
-        patient_state = PatientState.objects.get(pk=obj.current_state_id)
-        serializer = PatientStateSerializer(patient_state, many=False)
-        return serializer.data
-
     class Meta:
         model = Patient
         fields = "__all__"
+
 
 class PatientListSerializer(serializers.ModelSerializer):
     def get_field_names(self, *args, **kwargs):
@@ -31,7 +26,20 @@ class PatientListSerializer(serializers.ModelSerializer):
         model = Patient
         fields = ['id', 'age']
 
+
 class PatientStateSerializer(serializers.ModelSerializer):
     class Meta:
         model = PatientState
+        fields = "__all__"
+
+
+class EntitySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Entity
+        fields = "__all__"
+
+
+class InventorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Inventory
         fields = "__all__"
