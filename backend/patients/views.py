@@ -117,6 +117,7 @@ def patient_check_state(request, pk):
 
     if request.method == 'GET':
         serializer = PatientStateSerializer(patient.patient_state)
+        print("Blub")
         return Response(serializer.data)
 
 
