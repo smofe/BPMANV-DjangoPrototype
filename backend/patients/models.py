@@ -59,16 +59,29 @@ class Inventory(models.Model):
     entity = models.OneToOneField(Entity, on_delete=models.CASCADE)
     max_item_amount = models.IntegerField(default=200)
     current_item_amount = models.IntegerField(default=0)
-    material_mullbinde = models.IntegerField(default=0)
+    material_druckverband = models.IntegerField(default=0)
+    material_guedeltubus = models.IntegerField(default=0)
+    material_rettungsdecke = models.IntegerField(default=0)
+    material_blutdruckmessgeraet = models.IntegerField(default=0)
+    material_infusion = models.IntegerField(default=0)
     material_pflaster = models.IntegerField(default=0)
     material_schmerzmittel = models.IntegerField(default=0)
-    material_verband = models.IntegerField(default=0)
     material_tourniquet = models.IntegerField(default=0)
     material_beatmungsgeraet = models.IntegerField(default=0)
     material_defibrilator = models.IntegerField(default=0)
     material_sauerstoffflasche = models.IntegerField(default=0)
 
 
+class Vehicle(models.Model):
+    car_type = models.CharField(max_length=50, default='RTW')
+    funk_name = models.CharField(max_length=50, default='unknown')
+    arrival_time = models.DurationField(default=5)
+    distance = models.IntegerField(default=2)
+    manpower = models.IntegerField(default=2)
 
 
+class RescueForce(models.Model):
+    qualification = models.CharField(max_length=50, default='Rettungshelfer')
+    actual_role = models.CharField(max_length=50, default='Einsatzleiter')
+    dedicated_car = models.CharField(max_length=50, default='unknown')
 
