@@ -1,6 +1,6 @@
 # BPMANV-DjangoPrototype
 
-###Properly installing the project
+### Properly installing the project
 
 After cloning the project, run 
 ```shell
