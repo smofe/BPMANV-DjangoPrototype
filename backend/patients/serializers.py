@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Patient, PatientState, Entity, Inventory
+from .models import Patient, PatientState, Entity, Inventory, GameInstance
 
 
 class GameInstanceSerializer(serializers.ModelSerializer):
@@ -17,6 +17,7 @@ class GameInstanceSerializer(serializers.ModelSerializer):
 
 class GameInstanceDetailSerializer(serializers.ModelSerializer):
     patients = serializers.SerializerMethodField(method_name="get_patients")
+    entities = serializers.SerializerMethodField(method_name="get_entities")
 
     def get_field_names(self, *args, **kwargs):
         field_names = self.context.get('fields', None)
@@ -29,9 +30,14 @@ class GameInstanceDetailSerializer(serializers.ModelSerializer):
         serializer = PatientListSerializer(patients, many=True)
         return serializer.data
 
+    def get_entities(self, obj):
+        entities = Entity.objects.all().filter(game_instance=obj)
+        serializer = EntitySerializer(entities, many=True)
+        return serializer.data
+
     class Meta:
-        model = Patient
-        fields = "__all__"
+        model = GameInstance
+        fields = ('id', 'max_players', 'start_time', 'entities', 'patients')
 
 
 class PatientSerializer(serializers.ModelSerializer):
