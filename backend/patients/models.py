@@ -5,6 +5,8 @@ from django.dispatch import receiver
 from rest_framework.authtoken.models import Token
 from datetime import datetime
 
+default_datetime = datetime(2000, 1, 1)
+
 
 @receiver(post_save, sender=settings.AUTH_USER_MODEL)
 def create_auth_token(sender, instance=None, created=False, **kwargs):
@@ -37,7 +39,13 @@ class PatientState(models.Model):
     secondary_condition = models.CharField(max_length=50, default="has_tourniquet")
 
 
+class GameInstance(models.Model):
+    max_players = models.IntegerField(default=50)
+    start_time = models.DateTimeField(default=default_datetime)
+
+
 class Patient(models.Model):
+    game_instance = models.ForeignKey(GameInstance, models.CASCADE, default=1)
     name = models.CharField(max_length=50, default='unknown')
     age = models.IntegerField(default=9999)
     gender = models.CharField(max_length=20, default='none')
