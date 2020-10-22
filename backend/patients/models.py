@@ -33,7 +33,7 @@ class PatientState(models.Model):
     next_state_A = models.ForeignKey(to='PatientState', null=True, blank=True, on_delete=models.CASCADE, related_name="A")
     next_state_B = models.ForeignKey(to='PatientState', null=True,blank=True, on_delete=models.CASCADE, related_name="B")
     next_state_C = models.ForeignKey(to='PatientState', null=True,blank=True, on_delete=models.CASCADE, related_name="C")
-    duration = models.IntegerField(default=5)
+    duration = models.IntegerField(default=21)
     description = models.TextField(default='This is a patient.')
     primary_condition = models.CharField(max_length=50, default="is_ventilated")
     secondary_condition = models.CharField(max_length=50, default="has_tourniquet")
@@ -45,7 +45,7 @@ class GameInstance(models.Model):
 
 
 class Patient(models.Model):
-    game_instance = models.ForeignKey(GameInstance, models.CASCADE, default=1)
+    game_instance = models.ForeignKey(GameInstance, models.CASCADE, null=True, blank=True) #not in a game Instance for default!!
     name = models.CharField(max_length=50, default='unknown')
     age = models.IntegerField(default=9999)
     gender = models.CharField(max_length=20, default='none')
@@ -61,6 +61,7 @@ class Patient(models.Model):
 
 class Entity(models.Model):
     name = models.CharField(max_length=50, default='Player')
+    game_instance = models.ForeignKey(GameInstance, models.CASCADE, default=1)
 
 
 class Inventory(models.Model):

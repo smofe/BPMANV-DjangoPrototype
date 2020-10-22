@@ -1,5 +1,6 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from celery import Celery
+from django.utils import timezone
 
 from . import views
 from .models import Patient
@@ -20,17 +21,14 @@ def test2():
 @app.task
 def change_phase():
     all_patients = Patient.objects.all()
-    print(all_patients)
     for patient in all_patients:
-        print("Patient", patient)
-        actual_time = datetime.now()
-        print("patientstate durch serializer zugreifen:", patient.patient_state)
-        #duration = patient.patient_state.duration
-
-        #print("patientstate durch serializer zugreifen:", duration)
-'''
-        start_of_phase = patient.start_time
-        end_of_phase = start_of_phase + datetime.timedelta(seconds=duration)
-        if actual_time > end_of_phase:
-            data = views.patient_change_state(patient)
-            print(data)'''
+        actual_time = timezone.now()
+        print(actual_time)
+        if actual_time > patient.next_phase_timestamp:
+            end_of_current_phase = patient.next_phase_timestamp
+            views.change_state_of_one_patient(patient)
+            duration = patient.patient_state.duration
+            next_timestamp_json = {"next_phase_timestamp": end_of_current_phase + timedelta(seconds=duration)}
+            serializer = PatientSerializer(patient, data=next_timestamp_json)
+            if serializer.is_valid():
+                serializer.save()
