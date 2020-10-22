@@ -103,8 +103,8 @@ def patient_change_state(request, pk):
     patient = get_object_or_404(Patient, pk=pk)
 
     if request.method == 'PATCH':
-        primary_condition = PatientSerializer(patient, context={'fields': ['patient_state']}).data.get('patient_state').get('primary_condition')
-        primary_condition_boolean = PatientSerializer(patient, context={'fields': [primary_condition]}).data.get(primary_condition)
+        #primary_condition = PatientSerializer(patient, context={'fields': ['patient_state']}).data.get('patient_state').get('primary_condition')
+        #primary_condition_boolean = PatientSerializer(patient, context={'fields': [primary_condition]}).data.get(primary_condition)
 
         primary_condition = patient.patient_state.primary_condition
         primary_condition_is_met = PatientSerializer(patient, context={'fields': [primary_condition]}).data.get(primary_condition)
@@ -119,10 +119,11 @@ def patient_change_state(request, pk):
         else:
             new_patient_state_pk = patient.patient_state.next_state_A.id
 
-        safe_to_event_log(
+        save_to_event_log(
             "user: " + str(request.user) + " changed the state of patient(" + str(patient.id) + "): " + str(patient.name)
             + " from state: " + str(patient.patient_state.id) + " to state: " + str(new_patient_state_pk))
-        safe_to_event_log("user: " + str(request.user) + " request: " + str(request) + " body: " + str(request.body))
+        #save_to_event_log("user: " + str(request.user) + " request: " + str(request) + " body: " + str(request.body))
+        save_json_to_log(request)
 
         next_state_json = {"patient_state": new_patient_state_pk}
         serializer = PatientSerializer(patient, data=next_state_json)
@@ -181,7 +182,7 @@ def inventory_exchange(request, sender_pk, receiver_pk):
     receiver = get_object_or_404(Entity, pk=receiver_pk)
 
     if request.method == 'PATCH':
-        safe_json_to_log(request)
+        save_json_to_log(request)
         sender_json = InventorySerializer(sender.inventory).data
         receiver_json = InventorySerializer(receiver.inventory).data
         request_json = request.data
