@@ -103,33 +103,39 @@ def patient_change_state(request, pk):
     patient = get_object_or_404(Patient, pk=pk)
 
     if request.method == 'PATCH':
-        primary_condition = PatientSerializer(patient, context={'fields': ['patient_state']}).data.get('patient_state').get('primary_condition')
-        primary_condition_boolean = PatientSerializer(patient, context={'fields': [primary_condition]}).data.get(primary_condition)
-
-        primary_condition = patient.patient_state.primary_condition
-        primary_condition_is_met = PatientSerializer(patient, context={'fields': [primary_condition]}).data.get(primary_condition)
-
-        secondary_condition = patient.patient_state.secondary_condition
-        secondary_condition_is_met = PatientSerializer(patient, context={'fields': [secondary_condition]}).data.get(secondary_condition)
-
-        if primary_condition_is_met:
-            new_patient_state_pk = patient.patient_state.next_state_C.id
-        elif secondary_condition_is_met:
-            new_patient_state_pk = patient.patient_state.next_state_B.id
-        else:
-            new_patient_state_pk = patient.patient_state.next_state_A.id
-
-        safe_to_event_log(
-            "user: " + str(request.user) + " changed the state of patient(" + str(patient.id) + "): " + str(patient.name)
+        return change_state_of_one_patient(patient)
+        """ safe_to_event_log(
+            "user: " + str(request.user) + " changed the state of patient(" + str(patient.id) + "): " + str(
+                patient.name)
             + " from state: " + str(patient.patient_state.id) + " to state: " + str(new_patient_state_pk))
         safe_to_event_log("user: " + str(request.user) + " request: " + str(request) + " body: " + str(request.body))
+        """
 
-        next_state_json = {"patient_state": new_patient_state_pk}
-        serializer = PatientSerializer(patient, data=next_state_json)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+def change_state_of_one_patient(patient):
+    primary_condition = patient.patient_state.primary_condition
+    primary_condition_is_met = PatientSerializer(patient, context={'fields': [primary_condition]}).data.get(
+        primary_condition)
+
+    secondary_condition = patient.patient_state.secondary_condition
+    secondary_condition_is_met = PatientSerializer(patient, context={'fields': [secondary_condition]}).data.get(
+        secondary_condition)
+
+    if primary_condition_is_met:
+        new_patient_state_pk = patient.patient_state.next_state_C.id
+    elif secondary_condition_is_met:
+        new_patient_state_pk = patient.patient_state.next_state_B.id
+    else:
+        new_patient_state_pk = patient.patient_state.next_state_A.id
+
+
+    next_state_json = {"patient_state": new_patient_state_pk}
+    serializer = PatientSerializer(patient, data=next_state_json)
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 
 class EntityDetail(generics.RetrieveUpdateDestroyAPIView):
