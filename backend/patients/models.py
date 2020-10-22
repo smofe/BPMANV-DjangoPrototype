@@ -3,7 +3,7 @@ from django.conf import settings
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from rest_framework.authtoken.models import Token
-from datetime import datetime, timedelta
+from datetime import datetime
 
 
 @receiver(post_save, sender=settings.AUTH_USER_MODEL)
@@ -28,13 +28,13 @@ class PatientState(models.Model):
     # hat Zyanose
     has_cyanosis = models.BooleanField(default=False)
 
-    next_state_A_id = models.IntegerField(default=0)
-    next_state_B_id = models.IntegerField(default=0)
-    next_state_C_id = models.IntegerField(default=0)
+    next_state_A = models.ForeignKey(to='PatientState', default=1, on_delete=models.CASCADE, related_name="A")
+    next_state_B = models.ForeignKey(to='PatientState', default=1, on_delete=models.CASCADE, related_name="B")
+    next_state_C = models.ForeignKey(to='PatientState', default=1, on_delete=models.CASCADE, related_name="C")
+    duration = models.IntegerField(default=5)
     description = models.TextField(default='This is a patient.')
     primary_condition = models.CharField(max_length=50, default="is_ventilated")
     secondary_condition = models.CharField(max_length=50, default="has_tourniquet")
-    duration = models.IntegerField(default=15)
 
 
 class Patient(models.Model):
@@ -43,8 +43,7 @@ class Patient(models.Model):
     gender = models.CharField(max_length=20, default='none')
     hair_color = models.CharField(max_length=20, default='Orange')
     patient_state = models.ForeignKey(PatientState, default=1, on_delete=models.CASCADE)
-    start_time = models.DateTimeField(default=datetime.now())
-
+    next_phase_timestamp = models.DateTimeField(default=datetime.now())
 
     is_in_recovery_position = models.BooleanField(default=False)
     is_ventilated = models.BooleanField(default=False)
