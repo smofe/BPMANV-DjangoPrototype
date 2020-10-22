@@ -3,7 +3,7 @@ from django.conf import settings
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from rest_framework.authtoken.models import Token
-from datetime import datetime, timedelta
+from datetime import datetime
 
 default_datetime = datetime(2000, 1, 1)
 
@@ -30,9 +30,10 @@ class PatientState(models.Model):
     # hat Zyanose
     has_cyanosis = models.BooleanField(default=False)
 
-    next_state_A_id = models.IntegerField(default=0)
-    next_state_B_id = models.IntegerField(default=0)
-    next_state_C_id = models.IntegerField(default=0)
+    next_state_A = models.ForeignKey(to='PatientState', default=1, on_delete=models.CASCADE, related_name="A")
+    next_state_B = models.ForeignKey(to='PatientState', default=1, on_delete=models.CASCADE, related_name="B")
+    next_state_C = models.ForeignKey(to='PatientState', default=1, on_delete=models.CASCADE, related_name="C")
+    duration = models.IntegerField(default=5)
     description = models.TextField(default='This is a patient.')
     primary_condition = models.CharField(max_length=50, default="is_ventilated")
     secondary_condition = models.CharField(max_length=50, default="has_tourniquet")
@@ -50,8 +51,7 @@ class Patient(models.Model):
     gender = models.CharField(max_length=20, default='none')
     hair_color = models.CharField(max_length=20, default='Orange')
     patient_state = models.ForeignKey(PatientState, default=1, on_delete=models.CASCADE)
-    start_time = models.DateTimeField(default=default_datetime)
-    delay_in_minutes = models.IntegerField(default=15)
+    next_phase_timestamp = models.DateTimeField(default=datetime.now())
 
     is_in_recovery_position = models.BooleanField(default=False)
     is_ventilated = models.BooleanField(default=False)
@@ -92,5 +92,4 @@ class RescueForce(models.Model):
     qualification = models.CharField(max_length=50, default='Rettungshelfer')
     actual_role = models.CharField(max_length=50, default='Einsatzleiter')
     dedicated_car = models.CharField(max_length=50, default='unknown')
-
 

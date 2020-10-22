@@ -106,20 +106,25 @@ def patient_change_state(request, pk):
         primary_condition = PatientSerializer(patient, context={'fields': ['patient_state']}).data.get('patient_state').get('primary_condition')
         primary_condition_boolean = PatientSerializer(patient, context={'fields': [primary_condition]}).data.get(primary_condition)
 
-        secondary_condition = PatientSerializer(patient, context={'fields': ['patient_state']}).data.get(
-            'patient_state').get('secondary_condition')
-        secondary_condition_boolean = PatientSerializer(patient, context={'fields': [secondary_condition]}).data.get(
-            secondary_condition)
+        primary_condition = patient.patient_state.primary_condition
+        primary_condition_is_met = PatientSerializer(patient, context={'fields': [primary_condition]}).data.get(primary_condition)
 
-        if primary_condition_boolean:
-            next_state_variant = 'C'
-        elif secondary_condition_boolean:
-            next_state_variant = 'B'
+        secondary_condition = patient.patient_state.secondary_condition
+        secondary_condition_is_met = PatientSerializer(patient, context={'fields': [secondary_condition]}).data.get(secondary_condition)
+
+        if primary_condition_is_met:
+            new_patient_state_pk = patient.patient_state.next_state_C.id
+        elif secondary_condition_is_met:
+            new_patient_state_pk = patient.patient_state.next_state_B.id
         else:
-            next_state_variant = 'A'
+            new_patient_state_pk = patient.patient_state.next_state_A.id
 
-        next_id = PatientSerializer(patient, context={'fields': ['patient_state']}).data.get('patient_state').get("next_state_" + next_state_variant + "_id")
-        next_state_json = {"current_state_id": next_id}
+        safe_to_event_log(
+            "user: " + str(request.user) + " changed the state of patient(" + str(patient.id) + "): " + str(patient.name)
+            + " from state: " + str(patient.patient_state.id) + " to state: " + str(new_patient_state_pk))
+        safe_to_event_log("user: " + str(request.user) + " request: " + str(request) + " body: " + str(request.body))
+
+        next_state_json = {"patient_state": new_patient_state_pk}
         serializer = PatientSerializer(patient, data=next_state_json)
         if serializer.is_valid():
             serializer.save()
@@ -176,6 +181,7 @@ def inventory_exchange(request, sender_pk, receiver_pk):
     receiver = get_object_or_404(Entity, pk=receiver_pk)
 
     if request.method == 'PATCH':
+        safe_json_to_log(request)
         sender_json = InventorySerializer(sender.inventory).data
         receiver_json = InventorySerializer(receiver.inventory).data
         request_json = request.data
