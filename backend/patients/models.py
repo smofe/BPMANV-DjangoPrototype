@@ -61,6 +61,7 @@ class Patient(models.Model):
 
 class Entity(models.Model):
     name = models.CharField(max_length=50, default='Player')
+    game_instance = models.ForeignKey(GameInstance, models.CASCADE, default=1)
 
 
 class Inventory(models.Model):
