@@ -9,9 +9,14 @@ pip install -r requirements.txt
 then 
 ```shell
 cd backend  
-python manage.py createsuperuser
 python manage.py makemigrations  
 python manage.py migrate
+python manage.py createsuperuser
+```
+we usually use "admin" as id and "password123" as password   
+there is no need to add an email adress (just press enter)  
+then
+```shell
 python manage.py runserver
 ```
 
