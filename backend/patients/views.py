@@ -5,7 +5,7 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from .models import Patient, PatientState, Entity, Inventory
 from .serializers import PatientSerializer, PatientStateSerializer, EntitySerializer, InventorySerializer
-import datetime
+from datetime import datetime
 from .utils import *
 
 
@@ -41,7 +41,6 @@ class PatientStateDetail(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = PatientStateSerializer
 
 
-
 @api_view(['GET'])
 def patient_check_field(request, pk, field):
     """
@@ -52,21 +51,23 @@ def patient_check_field(request, pk, field):
     if request.method == 'GET':
         serializer = PatientSerializer(patient, context={'fields': [field]})
         current_date_and_time = datetime.datetime.now()
-        current_date_and_time += datetime.timedelta(seconds = 120)
+        current_date_and_time += datetime.timedelta(seconds=120)
         current_time = current_date_and_time.strftime("%H:%M:%S")
         return Response({'finishing_time': current_time, field: serializer.data})
 
 
 @api_view(['PUT'])
-def patient_change_state(request,pk):
+def patient_change_state_request(request, pk):
     """
     Invoke a phase change on a patient
     """
     patient = get_object_or_404(Patient, pk=pk)
 
     if request.method == 'PUT':
-        primary_condition = PatientSerializer(patient, context={'fields': ['patient_state']}).data.get('patient_state').get('primary_condition')
-        primary_condition_boolean = PatientSerializer(patient, context={'fields': [primary_condition]}).data.get(primary_condition)
+        primary_condition = PatientSerializer(patient, context={'fields': ['patient_state']}).data.get(
+            'patient_state').get('primary_condition')
+        primary_condition_boolean = PatientSerializer(patient, context={'fields': [primary_condition]}).data.get(
+            primary_condition)
 
         secondary_condition = PatientSerializer(patient, context={'fields': ['patient_state']}).data.get(
             'patient_state').get('secondary_condition')
@@ -80,13 +81,56 @@ def patient_change_state(request,pk):
         else:
             next_state_variant = 'A'
 
-        next_id = PatientSerializer(patient, context={'fields': ['patient_state']}).data.get('patient_state').get("next_state_" + next_state_variant + "_id")
+        next_id = PatientSerializer(patient, context={'fields': ['patient_state']}).data.get('patient_state').get(
+            "next_state_" + next_state_variant + "_id")
         next_state_json = {"current_state_id": next_id}
         serializer = PatientSerializer(patient, data=next_state_json)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['GET'])
+def change_state(request):
+    all_patients = Patient.objects.all()
+    for patient in all_patients:
+        actual_time = datetime.now()
+        duration = patient.patient_state.duration
+       # print("patientstate durch serializer zugreifen:", patient.patient_state)
+        serializer = PatientSerializer(patient)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+def patient_change_state(patient):
+    primary_condition = PatientSerializer(patient, context={'fields': ['patient_state']}).data.get('patient_state').get(
+        'primary_condition')
+    primary_condition_boolean = PatientSerializer(patient, context={'fields': [primary_condition]}).data.get(
+        primary_condition)
+
+    secondary_condition = PatientSerializer(patient, context={'fields': ['patient_state']}).data.get(
+        'patient_state').get('secondary_condition')
+    secondary_condition_boolean = PatientSerializer(patient, context={'fields': [secondary_condition]}).data.get(
+        secondary_condition)
+
+    if primary_condition_boolean:
+        next_state_variant = 'C'
+    elif secondary_condition_boolean:
+        next_state_variant = 'B'
+    else:
+        next_state_variant = 'A'
+
+    next_id = PatientSerializer(patient, context={'fields': ['patient_state']}).data.get('patient_state').get(
+        "next_state_" + next_state_variant + "_id")
+    next_state_json = {"current_state_id": next_id}
+    serializer = PatientSerializer(patient, data=next_state_json)
+    if serializer.is_valid():
+        serializer.save()
+    return serializer.data
 
 
 class EntityDetail(generics.RetrieveUpdateDestroyAPIView):
@@ -144,6 +188,8 @@ def inventory_exchange(request, sender_pk, receiver_pk):
                     receiver_serializer.save()
                     return Response(receiver_serializer.data)
             else:
-                return Response("The inventory requested from does not contain the specified quantities of material", status=status.HTTP_400_BAD_REQUEST)
+                return Response("The inventory requested from does not contain the specified quantities of material",
+                                status=status.HTTP_400_BAD_REQUEST)
         else:
-            return Response("No negative numbers are allowed in an exchange request", status=status.HTTP_400_BAD_REQUEST)
+            return Response("No negative numbers are allowed in an exchange request",
+                            status=status.HTTP_400_BAD_REQUEST)

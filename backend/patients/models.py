@@ -34,6 +34,7 @@ class PatientState(models.Model):
     description = models.TextField(default='This is a patient.')
     primary_condition = models.CharField(max_length=50, default="is_ventilated")
     secondary_condition = models.CharField(max_length=50, default="has_tourniquet")
+    duration = models.IntegerField(default=15)
 
 
 class Patient(models.Model):
@@ -43,7 +44,7 @@ class Patient(models.Model):
     hair_color = models.CharField(max_length=20, default='Orange')
     patient_state = models.ForeignKey(PatientState, default=1, on_delete=models.CASCADE)
     start_time = models.DateTimeField(default=datetime.now())
-    delay_in_minutes = models.IntegerField(default=15)
+
 
     is_in_recovery_position = models.BooleanField(default=False)
     is_ventilated = models.BooleanField(default=False)
