@@ -30,9 +30,9 @@ class PatientState(models.Model):
     # hat Zyanose
     has_cyanosis = models.BooleanField(default=False)
 
-    next_state_A = models.ForeignKey(to='PatientState', default=1, on_delete=models.CASCADE, related_name="A")
-    next_state_B = models.ForeignKey(to='PatientState', default=1, on_delete=models.CASCADE, related_name="B")
-    next_state_C = models.ForeignKey(to='PatientState', default=1, on_delete=models.CASCADE, related_name="C")
+    next_state_A = models.ForeignKey(to='PatientState', null=True, blank=True, on_delete=models.CASCADE, related_name="A")
+    next_state_B = models.ForeignKey(to='PatientState', null=True,blank=True, on_delete=models.CASCADE, related_name="B")
+    next_state_C = models.ForeignKey(to='PatientState', null=True,blank=True, on_delete=models.CASCADE, related_name="C")
     duration = models.IntegerField(default=5)
     description = models.TextField(default='This is a patient.')
     primary_condition = models.CharField(max_length=50, default="is_ventilated")
