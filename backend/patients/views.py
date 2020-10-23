@@ -79,7 +79,7 @@ def all_patients_start(request):
     """
     Sets the start_time to datetime.now() for all patients
     """
-    json = {"start_time": str(datetime.datetime.now())}
+    json = {"start_time": str(datetime.now())}
     if request.method == 'PATCH':
         return patch_all_patients(json)
 
@@ -131,7 +131,7 @@ def change_state_of_one_patient(patient):
         save_to_event_log(
             "user: " + str(request.user) + " changed the state of patient(" + str(patient.id) + "): " + str(patient.name)
             + " from state: " + str(patient.patient_state.id) + " to state: " + str(new_patient_state_pk))
-        #save_to_event_log("user: " + str(request.user) + " request: " + str(request) + " body: " + str(request.body))
+        # save_to_event_log("user: " + str(request.user) + " request: " + str(request) + " body: " + str(request.body))
         save_json_to_log(request)
 
     next_state_json = {"patient_state": new_patient_state_pk}
