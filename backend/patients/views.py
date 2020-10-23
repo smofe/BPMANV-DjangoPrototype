@@ -104,12 +104,6 @@ def patient_change_state(request, pk):
 
     if request.method == 'PATCH':
         return change_state_of_one_patient(patient)
-        """ safe_to_event_log(
-            "user: " + str(request.user) + " changed the state of patient(" + str(patient.id) + "): " + str(
-                patient.name)
-            + " from state: " + str(patient.patient_state.id) + " to state: " + str(new_patient_state_pk))
-        safe_to_event_log("user: " + str(request.user) + " request: " + str(request) + " body: " + str(request.body))
-        """
 
 
 def change_state_of_one_patient(patient):
@@ -121,24 +115,20 @@ def change_state_of_one_patient(patient):
     secondary_condition_is_met = PatientSerializer(patient, context={'fields': [secondary_condition]}).data.get(
         secondary_condition)
 
+    try:
+        next_state_A_id = patient.patient_state.next_state_A.id
+        next_state_B_id = patient.patient_state.next_state_B.id
+        next_state_C_id = patient.patient_state.next_state_C.id
+    except AttributeError:
+        print("No pointer on next state!")
+        return Response(status=status.HTTP_400_BAD_REQUEST)
+
     if primary_condition_is_met:
-        try:
-            new_patient_state_pk = patient.patient_state.next_state_C.id
-        except AttributeError:
-            print("No pointer on next state!")
-            return Response(status=status.HTTP_400_BAD_REQUEST)
+        new_patient_state_pk = next_state_C_id
     elif secondary_condition_is_met:
-        try:
-            new_patient_state_pk = patient.patient_state.next_state_B.id
-        except AttributeError:
-            print("No pointer on next state!")
-            return Response(status=status.HTTP_400_BAD_REQUEST)
+        new_patient_state_pk = next_state_B_id
     else:
-        try:
-            new_patient_state_pk = patient.patient_state.next_state_A.id
-        except AttributeError:
-            print("No pointer on next state!")
-            return Response(status=status.HTTP_400_BAD_REQUEST)
+        new_patient_state_pk = next_state_A_id
 
     next_state_json = {"patient_state": new_patient_state_pk}
     serializer = PatientSerializer(patient, data=next_state_json)
