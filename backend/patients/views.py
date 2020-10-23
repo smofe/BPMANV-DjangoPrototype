@@ -187,7 +187,7 @@ def inventory_exchange(request, sender_pk, receiver_pk):
     receiver = get_object_or_404(Entity, pk=receiver_pk)
 
     if request.method == 'PATCH':
-        save_json_to_log(request)
+        # save_json_to_log(request)
         sender_json = InventorySerializer(sender.inventory).data
         receiver_json = InventorySerializer(receiver.inventory).data
         request_json = request.data
