@@ -97,16 +97,14 @@ def save_json_to_log(request):
         "current_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
     }
     with open('data.json') as file:
-        try:
             data = file.read()
-            dic = json.loads(data)
-        except:
-            dic = {
-                "requests": []
-            }
-        print(dic["requests"])
-        dic["requests"].append(new_request)
-        print(dic["requests"])
+    try:
+        dic = json.loads(data)
+    except:
+        dic = {
+            "requests": []
+        }
+    dic["requests"].append(new_request)
     with open('data.json', 'w') as file:
         json.dump(dic, file, ensure_ascii=False, indent=4)
 
