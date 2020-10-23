@@ -3,10 +3,19 @@ from rest_framework import status, generics
 from rest_framework.decorators import api_view
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
-from .models import Patient, PatientState, Entity, Inventory
-from .serializers import PatientSerializer, PatientStateSerializer, EntitySerializer, InventorySerializer
+from .models import Patient, PatientState, Entity, Inventory, GameInstance
+from .serializers import *
 import datetime
 from .utils import *
+import json
+
+
+class GameInstanceList(generics.ListCreateAPIView):
+    """
+    List all patients, or create a new patient.
+    """
+    queryset = GameInstance.objects.all()
+    serializer_class = GameInstanceSerializer
 
 
 class PatientList(generics.ListCreateAPIView):
@@ -41,7 +50,6 @@ class PatientStateDetail(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = PatientStateSerializer
 
 
-
 @api_view(['GET'])
 def patient_check_field(request, pk, field):
     """
@@ -52,41 +60,86 @@ def patient_check_field(request, pk, field):
     if request.method == 'GET':
         serializer = PatientSerializer(patient, context={'fields': [field]})
         current_date_and_time = datetime.datetime.now()
-        current_date_and_time += datetime.timedelta(seconds = 120)
+        current_date_and_time += datetime.timedelta(seconds=120)
         current_time = current_date_and_time.strftime("%H:%M:%S")
         return Response({'finishing_time': current_time, field: serializer.data})
 
 
-@api_view(['PUT'])
-def patient_change_state(request,pk):
+@api_view(['PATCH'])
+def all_patients_view(request):
+    """
+    Sets the paramaters in the JSON for all patients
+    """
+    if request.method == 'PATCH':
+        return patch_all_patients(request.data)
+
+
+@api_view(['PATCH'])
+def all_patients_start(request):
+    """
+    Sets the start_time to datetime.now() for all patients
+    """
+    json = {"start_time": str(datetime.datetime.now())}
+    if request.method == 'PATCH':
+        return patch_all_patients(json)
+
+
+def patch_all_patients(data):
+    patients = Patient.objects.all()
+    for patient in patients:
+        serializer = PatientSerializer(patient, data=data)
+        if serializer.is_valid():
+            serializer.save()
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    return Response(data, status=status.HTTP_200_OK)
+
+
+@api_view(['PATCH'])
+def patient_change_state(request, pk):
     """
     Invoke a phase change on a patient
     """
     patient = get_object_or_404(Patient, pk=pk)
 
-    if request.method == 'PUT':
-        primary_condition = PatientSerializer(patient, context={'fields': ['patient_state']}).data.get('patient_state').get('primary_condition')
-        primary_condition_boolean = PatientSerializer(patient, context={'fields': [primary_condition]}).data.get(primary_condition)
+    if request.method == 'PATCH':
+        return change_state_of_one_patient(patient)
+        """ safe_to_event_log(
+            "user: " + str(request.user) + " changed the state of patient(" + str(patient.id) + "): " + str(
+                patient.name)
+            + " from state: " + str(patient.patient_state.id) + " to state: " + str(new_patient_state_pk))
+        safe_to_event_log("user: " + str(request.user) + " request: " + str(request) + " body: " + str(request.body))
+        """
 
-        secondary_condition = PatientSerializer(patient, context={'fields': ['patient_state']}).data.get(
-            'patient_state').get('secondary_condition')
-        secondary_condition_boolean = PatientSerializer(patient, context={'fields': [secondary_condition]}).data.get(
-            secondary_condition)
 
-        if primary_condition_boolean:
-            next_state_variant = 'C'
-        elif secondary_condition_boolean:
-            next_state_variant = 'B'
-        else:
-            next_state_variant = 'A'
+def change_state_of_one_patient(patient):
+    primary_condition = patient.patient_state.primary_condition
+    primary_condition_is_met = PatientSerializer(patient, context={'fields': [primary_condition]}).data.get(
+        primary_condition)
 
-        next_id = PatientSerializer(patient, context={'fields': ['patient_state']}).data.get('patient_state').get("next_state_" + next_state_variant + "_id")
-        next_state_json = {"current_state_id": next_id}
-        serializer = PatientSerializer(patient, data=next_state_json)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    secondary_condition = patient.patient_state.secondary_condition
+    secondary_condition_is_met = PatientSerializer(patient, context={'fields': [secondary_condition]}).data.get(
+        secondary_condition)
+
+    if primary_condition_is_met:
+        new_patient_state_pk = patient.patient_state.next_state_C.id
+    elif secondary_condition_is_met:
+        new_patient_state_pk = patient.patient_state.next_state_B.id
+    else:
+        new_patient_state_pk = patient.patient_state.next_state_A.id
+
+        save_to_event_log(
+            "user: " + str(request.user) + " changed the state of patient(" + str(patient.id) + "): " + str(patient.name)
+            + " from state: " + str(patient.patient_state.id) + " to state: " + str(new_patient_state_pk))
+        #save_to_event_log("user: " + str(request.user) + " request: " + str(request) + " body: " + str(request.body))
+        save_json_to_log(request)
+
+    next_state_json = {"patient_state": new_patient_state_pk}
+    serializer = PatientSerializer(patient, data=next_state_json)
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class EntityDetail(generics.RetrieveUpdateDestroyAPIView):
@@ -100,6 +153,15 @@ class EntityDetail(generics.RetrieveUpdateDestroyAPIView):
 class InventoryDetail(generics.RetrieveUpdateDestroyAPIView):
     queryset = Inventory.objects.all()
     serializer_class = InventorySerializer
+
+
+@api_view(['GET', 'PATCH'])
+def game_instance_detail(request, pk):
+    instance = get_object_or_404(GameInstance, pk=pk)
+
+    if request.method == 'GET':
+        instance_serializer = GameInstanceDetailSerializer(instance)
+        return Response(instance_serializer.data)
 
 
 @api_view(['GET'])
@@ -117,7 +179,6 @@ def patient_check_state(request, pk):
 
     if request.method == 'GET':
         serializer = PatientStateSerializer(patient.patient_state)
-        print("Blub")
         return Response(serializer.data)
 
 
@@ -130,6 +191,7 @@ def inventory_exchange(request, sender_pk, receiver_pk):
     receiver = get_object_or_404(Entity, pk=receiver_pk)
 
     if request.method == 'PATCH':
+        save_json_to_log(request)
         sender_json = InventorySerializer(sender.inventory).data
         receiver_json = InventorySerializer(receiver.inventory).data
         request_json = request.data

@@ -3,7 +3,9 @@ from django.conf import settings
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from rest_framework.authtoken.models import Token
-from datetime import datetime, timedelta
+from datetime import datetime
+
+default_datetime = datetime(2000, 1, 1)
 
 
 @receiver(post_save, sender=settings.AUTH_USER_MODEL)
@@ -28,22 +30,28 @@ class PatientState(models.Model):
     # hat Zyanose
     has_cyanosis = models.BooleanField(default=False)
 
-    next_state_A_id = models.IntegerField(default=0)
-    next_state_B_id = models.IntegerField(default=0)
-    next_state_C_id = models.IntegerField(default=0)
+    next_state_A = models.ForeignKey(to='PatientState', null=True, blank=True, on_delete=models.CASCADE, related_name="A")
+    next_state_B = models.ForeignKey(to='PatientState', null=True,blank=True, on_delete=models.CASCADE, related_name="B")
+    next_state_C = models.ForeignKey(to='PatientState', null=True,blank=True, on_delete=models.CASCADE, related_name="C")
+    duration = models.IntegerField(default=21)
     description = models.TextField(default='This is a patient.')
     primary_condition = models.CharField(max_length=50, default="is_ventilated")
     secondary_condition = models.CharField(max_length=50, default="has_tourniquet")
 
 
+class GameInstance(models.Model):
+    max_players = models.IntegerField(default=50)
+    start_time = models.DateTimeField(default=default_datetime)
+
+
 class Patient(models.Model):
+    game_instance = models.ForeignKey(GameInstance, models.CASCADE, null=True, blank=True) #not in a game Instance for default!!
     name = models.CharField(max_length=50, default='unknown')
     age = models.IntegerField(default=9999)
     gender = models.CharField(max_length=20, default='none')
     hair_color = models.CharField(max_length=20, default='Orange')
     patient_state = models.ForeignKey(PatientState, default=1, on_delete=models.CASCADE)
-    start_time = models.DateTimeField(default=datetime.now())
-    delay_in_minutes = models.IntegerField(default=15)
+    next_phase_timestamp = models.DateTimeField(default=datetime.now())
 
     is_in_recovery_position = models.BooleanField(default=False)
     is_ventilated = models.BooleanField(default=False)
@@ -53,6 +61,7 @@ class Patient(models.Model):
 
 class Entity(models.Model):
     name = models.CharField(max_length=50, default='Player')
+    game_instance = models.ForeignKey(GameInstance, models.CASCADE, default=1)
 
 
 class Inventory(models.Model):

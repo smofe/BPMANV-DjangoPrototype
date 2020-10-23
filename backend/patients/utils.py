@@ -1,3 +1,7 @@
+from datetime import datetime
+import json
+
+
 def json_has_attributes_of(superset_json, subset_json):
     """
     Checks if a superset_json contains all attributes of a subset_json
@@ -70,6 +74,44 @@ def json_add_subset(receiver_json, sender_json):
         return receiver_json
     else:
         raise Exception("Json format mismatch")
+
+
+def save_to_event_log(string):
+    text_file = open("user_event_log.txt", "a")
+    current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    text_file.write( "\n" + str(current_time) + " | " + string)
+    text_file.close()
+
+
+def save_json_to_log(request):
+    """
+    takes a request and parses it into a json to be stored in a log file
+    :param request: Request
+    :return:
+    """
+    new_request = {
+        "user": str(request.user),
+        "path": str(request.path),
+        "data": str(request.data),
+        "method": str(request.method),
+        "current_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+    }
+    with open('data.json') as file:
+        try:
+            data = file.read()
+            dic = json.loads(data)
+        except:
+            dic = {
+                "requests": []
+            }
+        print(dic["requests"])
+        dic["requests"].append(new_request)
+        print(dic["requests"])
+    with open('data.json', 'w') as file:
+        json.dump(dic, file, ensure_ascii=False, indent=4)
+
+
+
 
 
 
